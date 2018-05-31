@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.itranswarp.crypto.candiess.web.modules.ex.test.dao.TicksDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.itranswarp.crypto.candiess.web.modules.ex.test.entity.TicksEntity" id="ticksMap">
+        <result property="symbol" column="symbol"/>
+        <result property="takerorderid" column="takerOrderId"/>
+        <result property="makerorderid" column="makerOrderId"/>
+        <result property="price" column="price"/>
+        <result property="amount" column="amount"/>
+        <result property="id" column="id"/>
+        <result property="createdat" column="createdAt"/>
+    </resultMap>
+
+
+</mapper>

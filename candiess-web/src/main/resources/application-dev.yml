@@ -1,0 +1,83 @@
+spring:
+    datasource:
+        type: com.alibaba.druid.pool.DruidDataSource
+        driverClassName: com.mysql.jdbc.Driver
+        druid:
+            common:  #数据源1
+                url: jdbc:mysql://192.168.78.142:3306/common?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
+                username: root
+                password: 123456
+            ex:  #数据源2
+                url: jdbc:mysql://192.168.78.142:3306/ex?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
+                username: root
+                password: 123456
+            ui:  #数据源3
+                url: jdbc:mysql://192.168.78.142:3306/ui?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
+                username: root
+                password: 123456
+            mg:  #数据源4
+                url: jdbc:mysql://192.168.78.142:3306/mg?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
+                username: root
+                password: 123456
+            admin:  #数据源5
+                url: jdbc:mysql://192.168.78.142:3306/renren_fast?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
+                username: root
+                password: 123456
+            initial-size: 10
+            max-active: 100
+            min-idle: 10
+            max-wait: 60000
+            pool-prepared-statements: true
+            max-pool-prepared-statement-per-connection-size: 20
+            time-between-eviction-runs-millis: 60000
+            min-evictable-idle-time-millis: 300000
+            #validation-query: SELECT 1 FROM DUAL
+            test-while-idle: true
+            test-on-borrow: false
+            test-on-return: false
+            stat-view-servlet:
+                enabled: true
+                url-pattern: /druid/*
+                #login-username: admin
+                #login-password: admin
+            filter:
+                stat:
+                    log-slow-sql: true
+                    slow-sql-millis: 1000
+                    merge-sql: false
+                wall:
+                    config:
+                        multi-statement-allow: true
+crypto:
+  manage:
+    # Manage服务器是否位于https反向代理，生产环境必须配置为true:
+    secure: false
+    view:
+      # 是否缓存页面模版，生产环境必须配置为true:
+      cache: false
+    api:
+      # 配置API服务器地址，默认为http://localhost:8088
+      endpoint: http://localhost:8088
+      # 配置与API服务器通信使用的api-key和api-secret:
+      api-key: ManageInternalKey
+      api-secret: ${MANAGE_API_SECRET:ManageInternalSecret}
+    ui:
+      # 配置UI服务器地址，默认为http://localhost:8080
+      endpoint: http://localhost:8080
+      # 配置与UI服务器通信使用的api-key和api-secret:
+      api-key: ManageToUIInternalKey
+      api-secret: ManageToUIInternalSecret
+    redis:
+      # 配置模式: single, cluster, elasticcache:
+      mode: single
+      # Redis节点地址列表:
+      nodes:
+        - "redis://localhost:6379"
+        # - "redis://10.1.0.100:6379"
+        # - "redis://10.1.0.101:6379"
+        # - "redis://10.1.0.102:6379"
+    mq:
+      name-srv: 192.168.78.142:9876
+      consumer-group: manage
+      consume-thread-max: 1
+      consume-thread-min: 1

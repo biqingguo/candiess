@@ -1,0 +1,149 @@
+package ${package}.${moduleName}.controller;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import javax.servlet.http.HttpServletResponse;
+import java.util.Arrays;
+import java.util.List;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import com.itranswarp.crypto.candiess.common.validator.ValidatorUtils;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import com.itranswarp.crypto.candiess.api.query.QueryViewVo;
+import com.itranswarp.crypto.candiess.common.utils.ExcelUtil;
+import com.itranswarp.crypto.candiess.common.utils.ExcelUtil.WriteExcel;
+import ${package}.${moduleName}.entity.${className}Entity;
+import ${package}.${moduleName}.service.${className}Service;
+import ${mainPath}.common.utils.PageUtils;
+import ${mainPath}.common.utils.R;
+
+
+
+/**
+ * ${comments}
+ *
+ * @author ${author}
+ * @email ${email}
+ * @date ${datetime}
+ */
+@RestController
+@RequestMapping("${moduleName}/${pathName}")
+public class ${className}Controller {
+	protected final Logger logger = LoggerFactory.getLogger(getClass());
+    @Autowired
+    private ${className}Service ${classname}Service;
+
+/**
+	 * 列表
+	 */
+	@RequestMapping("/list")
+	@RequiresPermissions("${moduleName}:${pathName}:list")
+	public R list(QueryViewVo<${className}Entity> queryViewVo) {
+		PageUtils page = ${classname}Service.queryPage(queryViewVo);
+		return R.ok().put("page", page);
+	}
+
+	/**
+	 * 导出数据到excel
+	 * 
+	 * @param response
+	 * @param queryViewVo
+	 * @return
+	 */
+	@RequestMapping("/download")
+	@RequiresPermissions("${moduleName}:${pathName}:download")
+	public void download(HttpServletResponse response, QueryViewVo<${className}Entity> queryViewVo) {
+		try {
+			List<${className}Entity> download = ${classname}Service.download(queryViewVo);
+			XSSFWorkbook sfworkbook = new XSSFWorkbook();
+			ExcelUtil excelUtil = new ExcelUtil();
+			SXSSFWorkbook createWorkbook = excelUtil.createWorkbook(sfworkbook);
+			WriteExcel<${className}Entity> writeexcel = new WriteExcel<${className}Entity>() {
+
+				@Override
+				public void writeHead(XSSFRow contentxfrow) {
+					#foreach($column in $columns)
+						#set($num=$velocityCount)
+						#set($num=$num - 1)
+						XSSFCell createCell${velocityCount} = contentxfrow.createCell(${num});
+						createCell${velocityCount}.setCellValue("${column.comments}");
+					#end
+				}
+
+				@Override
+				public void write(XSSFRow contentxfrow, ${className}Entity t) {
+					#foreach($column in $columns)
+						#set($num=$velocityCount)
+						#set($num=$num - 1)
+						XSSFCell createCell${velocityCount} = contentxfrow.createCell(${num});
+						createCell${velocityCount}.setCellValue(t.get${column.attrName}());
+					#end
+				}
+			};
+			excelUtil.createHead(sfworkbook, createWorkbook, writeexcel);
+			excelUtil.writeXlsFile(sfworkbook, createWorkbook, download, writeexcel);
+			/**
+			 * 保存文件
+			 */
+			String saveXlsFile = excelUtil.saveXlsFile(sfworkbook, queryViewVo.getPassword());
+			excelUtil.sendExcel(response, saveXlsFile);
+		} catch (Exception e) {
+			logger.error(ExceptionUtils.getStackTrace(e));
+		}
+	}
+
+
+    /**
+     * 信息
+     */
+    @RequestMapping("/info/{${pk.attrname}}")
+    @RequiresPermissions("${moduleName}:${pathName}:info")
+    public R info(@PathVariable("${pk.attrname}") ${pk.attrType} ${pk.attrname}){
+        ${className}Entity ${classname} = ${classname}Service.selectById(${pk.attrname});
+
+        return R.ok().put("${classname}", ${classname});
+    }
+
+    /**
+     * 保存
+     */
+    @RequestMapping("/save")
+    @RequiresPermissions("${moduleName}:${pathName}:save")
+    public R save(@RequestBody ${className}Entity ${classname}){
+        ${classname}Service.insert(${classname});
+
+        return R.ok();
+    }
+
+    /**
+     * 修改
+     */
+    @RequestMapping("/update")
+    @RequiresPermissions("${moduleName}:${pathName}:update")
+    public R update(@RequestBody ${className}Entity ${classname}){
+        ValidatorUtils.validateEntity(${classname});
+        ${classname}Service.updateAllColumnById(${classname});//全部更新
+        
+        return R.ok();
+    }
+
+    /**
+     * 删除
+     */
+    @RequestMapping("/delete")
+    @RequiresPermissions("${moduleName}:${pathName}:delete")
+    public R delete(@RequestBody ${pk.attrType}[] ${pk.attrname}s){
+        ${classname}Service.deleteBatchIds(Arrays.asList(${pk.attrname}s));
+
+        return R.ok();
+    }
+
+}

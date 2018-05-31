@@ -1,0 +1,45 @@
+package ${package}.${moduleName}.service.impl;
+
+import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import com.baomidou.mybatisplus.mapper.EntityWrapper;
+import com.baomidou.mybatisplus.plugins.Page;
+import com.baomidou.mybatisplus.service.impl.ServiceImpl;
+import ${mainPath}.common.utils.PageUtils;
+import ${mainPath}.web.common.utils.Query;
+
+import ${package}.${moduleName}.dao.${className}Dao;
+import ${package}.${moduleName}.entity.${className}Entity;
+import ${package}.${moduleName}.service.${className}Service;
+import com.itranswarp.crypto.candiess.api.query.QueryViewVo;
+
+
+@Service("${classname}Service")
+public class ${className}ServiceImpl extends ServiceImpl<${className}Dao, ${className}Entity> implements ${className}Service {
+	protected final Logger logger = LoggerFactory.getLogger(getClass());
+
+    @Override
+    public PageUtils queryPage(Map<String, Object> params) {
+        Page<${className}Entity> page = this.selectPage(
+                new Query<${className}Entity>(params).getPage(),
+                new EntityWrapper<${className}Entity>()
+        );
+
+        return new PageUtils(page);
+    }
+
+	@Override
+	public PageUtils queryPage(QueryViewVo<${className}Entity> queryViewVo) {
+		Page<${className}Entity> page = this.selectPage(queryViewVo.getPageUtil(), queryViewVo.getWrapper());
+		return new PageUtils(page);
+	}
+
+	@Override
+	public List<${className}Entity> download(QueryViewVo<${className}Entity> queryViewVo) {
+		List<${className}Entity> list = this.selectList(queryViewVo.getWrapper());
+		return list;
+	}
+}
