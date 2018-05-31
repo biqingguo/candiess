@@ -17,6 +17,7 @@
 		<module>candiess-mq</module>
 		<module>candiess-generator</module>
 		<module>candiess-web</module>
+		<module>candiess-canal</module>
 	</modules>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

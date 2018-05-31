@@ -47,5 +47,3 @@ renren:
 logging:
   level: debug
   level.com.itranswarp.crypto.candiess: debug
-  path: logs/
-  file: admin.log
