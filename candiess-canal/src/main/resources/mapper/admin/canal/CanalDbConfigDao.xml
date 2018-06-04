@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.itranswarp.crypto.candiess.web.modules.admin.canal.dao.CanalDbConfigDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.itranswarp.crypto.candiess.web.modules.admin.canal.entity.CanalDbConfigEntity" id="canalDbConfigMap">
+        <result property="destination" column="destination"/>
+        <result property="salveid" column="salveId"/>
+        <result property="dbaddress" column="dbAddress"/>
+        <result property="dbport" column="dbPort"/>
+        <result property="dnuser" column="dnUser"/>
+        <result property="dbpassword" column="dbPassword"/>
+        <result property="detectingsql" column="detectingSql"/>
+        <result property="textvalue" column="textValue"/>
+        <result property="status" column="status"/>
+        <result property="id" column="id"/>
+        <result property="createdat" column="createdAt"/>
+        <result property="updatedat" column="updatedAt"/>
+        <result property="version" column="version"/>
+    </resultMap>
+
+
+</mapper>

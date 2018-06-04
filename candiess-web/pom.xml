@@ -39,6 +39,12 @@
 			<artifactId>candiess-mq</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		<!---->
+		<dependency>
+			<groupId>com.itranswarp.crypto</groupId>
+			<artifactId>candiess-canal</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-freemarker</artifactId>
