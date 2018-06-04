@@ -2,11 +2,10 @@ package com.itranswarp.crypto.candiess.web.modules.admin.canal;
 
 import java.net.InetSocketAddress;
 import java.util.Arrays;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.PostConstruct;
@@ -15,7 +14,6 @@ import javax.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import com.alibaba.otter.canal.instance.manager.model.Canal;
@@ -25,31 +23,39 @@ import com.alibaba.otter.canal.instance.manager.model.CanalParameter.IndexMode;
 import com.alibaba.otter.canal.instance.manager.model.CanalParameter.MetaMode;
 import com.alibaba.otter.canal.instance.manager.model.CanalParameter.SourcingType;
 import com.alibaba.otter.canal.instance.manager.model.CanalParameter.StorageMode;
-import com.itranswarp.crypto.CryptoManageApplication;
-import com.itranswarp.crypto.manage.model.CanalDbConfig;
-import com.itranswarp.crypto.manage.model.CanalPositionsConfig;
-import com.itranswarp.crypto.manage.util.JsonUtil;
-import com.itranswarp.warpdb.WarpDb;
+import com.baomidou.mybatisplus.mapper.EntityWrapper;
+import com.baomidou.mybatisplus.mapper.Wrapper;
+import com.itranswarp.crypto.candiess.web.modules.admin.canal.entity.CanalDbConfigEntity;
+import com.itranswarp.crypto.candiess.web.modules.admin.canal.entity.CanalpositionsConfigEntity;
+import com.itranswarp.crypto.candiess.web.modules.admin.canal.service.CanalDbConfigService;
+import com.itranswarp.crypto.candiess.web.modules.admin.canal.service.CanalpositionsConfigService;
 
 @Component
 public class CanalStart {
 	protected final Logger logger = LoggerFactory.getLogger(getClass());
 	@Autowired
-	@Qualifier(CryptoManageApplication.MANAGE_WARP_DB)
-	protected WarpDb db;
+	private CanalDbConfigService canalDbConfigService;
+	@Autowired
+	private CanalpositionsConfigService canalpositionsConfigService;
+
 	private Map<String, ManageCanalInstanceWithManager> map = new ConcurrentHashMap<>();
 
 	@PostConstruct
 	public void init() {
-		List<CanalDbConfig> list = db.list("SELECT * FROM canalDbConfig WHERE `status` = ?", "TRUE");
-		for (CanalDbConfig canalDbConfig : list) {
-			List<CanalPositionsConfig> canalPositionsConfigList = db
-					.list("SELECT * FROM canalPositionsConfig WHERE dbConfigId = ?", canalDbConfig.id);
 
+		Map<String, Object> columnMap = new HashMap<String, Object>();
+		columnMap.put("status", "TRUE");
+		List<CanalDbConfigEntity> selectByMap = canalDbConfigService.selectByMap(columnMap);
+		for (CanalDbConfigEntity canalDbConfig : selectByMap) {
+			Map<String, Object> columnMaps = new HashMap<String, Object>();
+			columnMaps.put("dbConfigId", canalDbConfig.getId());
+			Wrapper<CanalpositionsConfigEntity> wrapper = new EntityWrapper<>();
+			wrapper.allEq(columnMaps);
+			CanalpositionsConfigEntity selectOne = canalpositionsConfigService.selectOne(wrapper);
 			Canal canal = new Canal();
-			canal.setId(canalDbConfig.salveId);
-			canal.setName(canalDbConfig.destination);
-			canal.setDesc(canalDbConfig.textValue);
+			canal.setId(canalDbConfig.getSalveid());
+			canal.setName(canalDbConfig.getDestination());
+			canal.setDesc(canalDbConfig.getTextvalue());
 			CanalParameter parameter = new CanalParameter();
 			parameter.setMetaMode(MetaMode.MEMORY); // 冷备，可选择混合模式
 			parameter.setHaMode(HAMode.HEARTBEAT);
@@ -59,17 +65,16 @@ public class CanalStart {
 			parameter.setMemoryStorageBufferSize(32 * 1024);
 
 			parameter.setSourcingType(SourcingType.MYSQL);
-			parameter.setDbAddresses(Arrays
-					.asList(new InetSocketAddress(canalDbConfig.dbAddress, Integer.parseInt(canalDbConfig.dbPort))));
-			parameter.setDbUsername(canalDbConfig.dnUser);
-			parameter.setDbPassword(canalDbConfig.dbPassword);
-			if (canalPositionsConfigList != null && !canalPositionsConfigList.isEmpty()) {
-				CanalPositionsConfig canalPositionsConfig = canalPositionsConfigList.get(0);
-				parameter.setPositions(Arrays.asList("{\"journalName\":\"" + canalPositionsConfig.journalName
-						+ "\",\"position\":" + canalPositionsConfig.position + "L,\"timestamp\":"
-						+ canalPositionsConfig.timestamp + "L}"));
+			parameter.setDbAddresses(Arrays.asList(
+					new InetSocketAddress(canalDbConfig.getDbaddress(), Integer.parseInt(canalDbConfig.getDbport()))));
+			parameter.setDbUsername(canalDbConfig.getDnuser());
+			parameter.setDbPassword(canalDbConfig.getDbpassword());
+			if (selectOne != null) {
+				parameter.setPositions(
+						Arrays.asList("{\"journalName\":\"" + selectOne.getJournalname() + "\",\"position\":"
+								+ selectOne.getPosition() + "L,\"timestamp\":" + selectOne.getTimestamp() + "L}"));
 			}
-			parameter.setSlaveId(canalDbConfig.salveId);
+			parameter.setSlaveId(canalDbConfig.getSalveid());
 			parameter.setDefaultConnectionTimeoutInSeconds(30);
 			parameter.setConnectionCharset("UTF-8");
 			parameter.setConnectionCharsetNumber((byte) 33);
@@ -78,13 +83,13 @@ public class CanalStart {
 			parameter.setDetectingEnable(true);
 			parameter.setDetectingIntervalInSeconds(10);
 			parameter.setDetectingRetryTimes(3);
-			parameter.setDetectingSQL(canalDbConfig.detectingSql);
+			parameter.setDetectingSQL(canalDbConfig.getDetectingsql());
 			// parameter.setMasterTimestamp(1524730141l);
 			canal.setCanalParameter(parameter);
 			ManageCanalInstanceWithManager canalInstanceWithManager = new ManageCanalInstanceWithManager(canal,
-					canalDbConfig.destination, canalDbConfig.id);
+					canalDbConfig.getDestination(), canalDbConfig.getId());
 			canalInstanceWithManager.start();
-			map.put(canalDbConfig.destination, canalInstanceWithManager);
+			map.put(canalDbConfig.getDestination(), canalInstanceWithManager);
 		}
 		// ManageCanalInstanceWithManager canalInstanceWithManager = new
 		// ManageCanalInstanceWithManager(buildCanal(),

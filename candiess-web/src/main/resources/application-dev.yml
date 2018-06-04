@@ -4,23 +4,23 @@ spring:
         driverClassName: com.mysql.jdbc.Driver
         druid:
             common:  #数据源1
-                url: jdbc:mysql://192.168.78.142:3306/common?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
+                url: jdbc:mysql://192.168.78.145:3306/common?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
                 username: root
                 password: 123456
             ex:  #数据源2
-                url: jdbc:mysql://192.168.78.142:3306/ex?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
+                url: jdbc:mysql://192.168.78.145:3306/ex?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
                 username: root
                 password: 123456
             ui:  #数据源3
-                url: jdbc:mysql://192.168.78.142:3306/ui?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
+                url: jdbc:mysql://192.168.78.145:3306/ui?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
                 username: root
                 password: 123456
             mg:  #数据源4
-                url: jdbc:mysql://192.168.78.142:3306/mg?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
+                url: jdbc:mysql://192.168.78.145:3306/mg?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
                 username: root
                 password: 123456
             admin:  #数据源5
-                url: jdbc:mysql://192.168.78.142:3306/renren_fast?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
+                url: jdbc:mysql://192.168.78.145:3306/renren_fast?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
                 username: root
                 password: 123456
             initial-size: 10
@@ -77,7 +77,7 @@ crypto:
         # - "redis://10.1.0.101:6379"
         # - "redis://10.1.0.102:6379"
     mq:
-      name-srv: 192.168.78.142:9876
+      name-srv: 192.168.78.145:9876
       consumer-group: manage
       consume-thread-max: 1
       consume-thread-min: 1

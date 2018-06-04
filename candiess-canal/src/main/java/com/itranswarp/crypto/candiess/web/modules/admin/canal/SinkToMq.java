@@ -5,21 +5,25 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.otter.canal.parse.inbound.SinkFunction;
-import com.itranswarp.crypto.canal.vo.ChangeEventType;
-import com.itranswarp.crypto.canal.vo.SendLogVo;
-import com.itranswarp.crypto.common.SpringUtil;
-import com.itranswarp.crypto.manage.model.CanalPositionsConfig;
-import com.itranswarp.crypto.manage.service.SendMessageToMq;
-import com.itranswarp.crypto.manage.util.JsonUtil;
-import com.itranswarp.warpdb.WarpDb;
+import com.baomidou.mybatisplus.mapper.EntityWrapper;
+import com.baomidou.mybatisplus.mapper.Wrapper;
+import com.itranswarp.crypto.candiess.common.utils.JsonUtil;
+import com.itranswarp.crypto.candiess.common.utils.SpringContextUtils;
+import com.itranswarp.crypto.candiess.web.modules.admin.canal.entity.CanalpositionsConfigEntity;
+import com.itranswarp.crypto.candiess.web.modules.admin.canal.service.CanalpositionsConfigService;
+import com.itranswarp.crypto.candiess.web.modules.admin.canal.vo.ChangeEventType;
+import com.itranswarp.crypto.candiess.web.modules.admin.canal.vo.SendLogVo;
 import com.taobao.tddl.dbsync.binlog.LogEvent;
 import com.taobao.tddl.dbsync.binlog.event.DeleteRowsLogEvent;
 import com.taobao.tddl.dbsync.binlog.event.RotateLogEvent;
@@ -53,22 +57,27 @@ public class SinkToMq implements SinkFunction<LogEvent> {
 						 * binlogFileName不能为空 positionbinlog的下标不能为0 而且进度未更新到数据库
 						 */
 						if (StringUtils.isNotEmpty(binlogFileName) && position > 0 && positionOld != position) {
-							CanalPositionsConfig canalPositionsConfig = new CanalPositionsConfig();
-							canalPositionsConfig.journalName = binlogFileName;
-							canalPositionsConfig.dbConfigId = id;
-							canalPositionsConfig.position = position;
-							canalPositionsConfig.timestamp = System.currentTimeMillis();
+							CanalpositionsConfigEntity canalPositionsConfig = new CanalpositionsConfigEntity();
+							canalPositionsConfig.setJournalname(binlogFileName);
+							canalPositionsConfig.setDbconfigid(id);
+							canalPositionsConfig.setPosition(position);
+							canalPositionsConfig.setTimestamp(System.currentTimeMillis());
 							positionOld = position;
-							WarpDb warpDb = (WarpDb) SpringUtil.getBean("manageWarpDB");
-							List<CanalPositionsConfig> canalPositionsConfigList = warpDb
-									.list("SELECT * FROM canalpositionsconfig WHERE dbConfigId = ?", id);
-							if (canalPositionsConfigList == null || canalPositionsConfigList.isEmpty()) {
-								warpDb.save(canalPositionsConfig);
+							CanalpositionsConfigService canalpositionsConfigService = (CanalpositionsConfigService) SpringContextUtils
+									.getBean("canalpositionsConfigService");
+
+							Wrapper<CanalpositionsConfigEntity> wrapper = new EntityWrapper<>();
+							Map<String, Object> params = new HashMap<>();
+							params.put("dbConfigId", id);
+							wrapper.allEq(params);
+							CanalpositionsConfigEntity selectOne = canalpositionsConfigService.selectOne(wrapper);
+							if (selectOne == null) {
+								canalpositionsConfigService.insert(canalPositionsConfig);
 							} else {
-								canalPositionsConfig.id = canalPositionsConfigList.get(0).id;
-								warpDb.update(canalPositionsConfig);
+								canalPositionsConfig.setId(selectOne.getId());
+								canalpositionsConfigService.updateById(canalPositionsConfig);
 							}
-							logger.info("canal守护进程保存进度:{}", JsonUtil.toJson(canalPositionsConfig));
+							logger.info("canal守护进程保存进度:{}", JSONObject.toJSON(canalPositionsConfig));
 						}
 						Thread.sleep(1000l);
 					} catch (InterruptedException e) {
@@ -83,7 +92,6 @@ public class SinkToMq implements SinkFunction<LogEvent> {
 
 	@Override
 	public boolean sink(LogEvent event) {
-
 		int eventType = event.getHeader().getType();
 		switch (eventType) {
 		/**
@@ -150,7 +158,8 @@ public class SinkToMq implements SinkFunction<LogEvent> {
 	 */
 	public void writeRowsLogEvent(WriteRowsLogEvent event) {
 		try {
-			SendMessageToMq sendMessageToMq = (SendMessageToMq) SpringUtil.getBean("sendMessageToMq");
+			// SendMessageToMq sendMessageToMq = (SendMessageToMq)
+			// SpringUtil.getBean("sendMessageToMq");
 			RowsLogBuffer buffer = event.getRowsBuf(charset.name());
 			BitSet columns = event.getColumns();
 			while (buffer.nextOneRow(columns)) {
@@ -164,8 +173,8 @@ public class SinkToMq implements SinkFunction<LogEvent> {
 				sendLogVo.setTableName(event.getTable().getTableName());
 				sendLogVo.setChangeEventType(ChangeEventType.INSERT);
 				sendLogVo.setData(parseOneRow);
-				sendMessageToMq.sendMq(sendLogVo, id);
-				// System.out.println(JsonUtil.toJson(sendLogVo));
+				// sendMessageToMq.sendMq(sendLogVo, id);
+				System.out.println(JsonUtil.toJson(sendLogVo));
 			}
 		} catch (Exception e) {
 			throw new RuntimeException("parse row data failed.", e);
@@ -179,7 +188,8 @@ public class SinkToMq implements SinkFunction<LogEvent> {
 	 */
 	public void updateRowsLogEvent(UpdateRowsLogEvent event) {
 		try {
-			SendMessageToMq sendMessageToMq = (SendMessageToMq) SpringUtil.getBean("sendMessageToMq");
+			// SendMessageToMq sendMessageToMq = (SendMessageToMq)
+			// SpringUtil.getBean("sendMessageToMq");
 			RowsLogBuffer buffer = event.getRowsBuf(charset.name());
 			BitSet columns = event.getColumns();
 			BitSet changeColumns = event.getChangeColumns();
@@ -198,8 +208,8 @@ public class SinkToMq implements SinkFunction<LogEvent> {
 				sendLogVo.setChangeEventType(ChangeEventType.UPDATE);
 				sendLogVo.setData(parseOneRowNew);
 				sendLogVo.setOlddata(parseOneRowOld);
-				sendMessageToMq.sendMq(sendLogVo, id);
-				// System.out.println(JsonUtil.toJson(sendLogVo));
+				// sendMessageToMq.sendMq(sendLogVo, id);
+				System.out.println(JsonUtil.toJson(sendLogVo));
 			}
 		} catch (Exception e) {
 			throw new RuntimeException("parse row data failed.", e);
@@ -213,7 +223,8 @@ public class SinkToMq implements SinkFunction<LogEvent> {
 	 */
 	public void deleteRowsLogEvent(DeleteRowsLogEvent event) {
 		try {
-			SendMessageToMq sendMessageToMq = (SendMessageToMq) SpringUtil.getBean("sendMessageToMq");
+			// SendMessageToMq sendMessageToMq = (SendMessageToMq)
+			// SpringUtil.getBean("sendMessageToMq");
 			RowsLogBuffer buffer = event.getRowsBuf(charset.name());
 			BitSet columns = event.getColumns();
 			while (buffer.nextOneRow(columns)) {
@@ -226,8 +237,8 @@ public class SinkToMq implements SinkFunction<LogEvent> {
 				sendLogVo.setTableName(event.getTable().getTableName());
 				sendLogVo.setChangeEventType(ChangeEventType.DELETE);
 				sendLogVo.setData(parseOneRow);
-				sendMessageToMq.sendMq(sendLogVo, id);
-				// System.out.println(JsonUtil.toJson(sendLogVo));
+				// sendMessageToMq.sendMq(sendLogVo, id);
+				System.out.println(JsonUtil.toJson(sendLogVo));
 			}
 		} catch (Exception e) {
 			throw new RuntimeException("parse row data failed.", e);
